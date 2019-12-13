@@ -127,7 +127,7 @@ TcpOption TcpLayer::addTcpOptionAfter(const TcpOptionBuilder& optionBuilder, Tcp
 
 bool TcpLayer::removeTcpOption(TcpOptionType optionType)
 {
-	TcpOption opt = getTcpOption(optionType);
+	TcpOption opt = getTcpOption(optionType);	// 遍历获取
 	if (opt.isNull())
 	{
 		return false;
@@ -141,17 +141,17 @@ bool TcpLayer::removeTcpOption(TcpOptionType optionType)
 		totalOptSize += curOpt.getTotalSize();
 		curOpt = getNextTcpOption(curOpt);
 	}
-	totalOptSize -= opt.getTotalSize();
+	totalOptSize -= opt.getTotalSize();		// 减去要删除的Opt的大小
 
 
 	int offset = opt.getRecordBasePtr() - m_Data;
 
-	if (!shortenLayer(offset, opt.getTotalSize()))
+	if (!shortenLayer(offset, opt.getTotalSize()))		// 收缩Opt的长度
 	{
 		return false;
 	}
 
-	adjustTcpOptionTrailer(totalOptSize);
+	adjustTcpOptionTrailer(totalOptSize);				// 调整TCP选项尾部
 
 	m_OptionReader.changeTLVRecordCount(-1);
 
@@ -217,6 +217,7 @@ TcpOption TcpLayer::addTcpOptionAt(const TcpOptionBuilder& optionBuilder, int of
 void TcpLayer::adjustTcpOptionTrailer(size_t totalOptSize)
 {
 	int newNumberOfTrailingBytes = 0;
+	// 4字节对齐
 	while ((totalOptSize + newNumberOfTrailingBytes) % 4 != 0)
 		newNumberOfTrailingBytes++;
 
@@ -230,6 +231,7 @@ void TcpLayer::adjustTcpOptionTrailer(size_t totalOptSize)
 	for (int i = 0; i < m_NumOfTrailingBytes; i++)
 		m_Data[sizeof(tcphdr) + totalOptSize + i] = TCPOPT_DUMMY;
 
+	// 设置TCP头大小（4的倍数）
 	getTcpHeader()->dataOffset = (sizeof(tcphdr) + totalOptSize + m_NumOfTrailingBytes)/4;
 }
 
@@ -296,7 +298,7 @@ void TcpLayer::initLayer()
 	memset(m_Data, 0, m_DataLen);
 	m_Protocol = TCP;						// 标识当前协议类型为 TCP
 	m_NumOfTrailingBytes = 0;
-	getTcpHeader()->dataOffset = sizeof(tcphdr)/4;
+	getTcpHeader()->dataOffset = sizeof(tcphdr)/4;		// 默认是5
 }
 
 TcpLayer::TcpLayer(uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet) : Layer(data, dataLen, prevLayer, packet)

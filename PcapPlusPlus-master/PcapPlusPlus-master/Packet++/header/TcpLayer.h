@@ -13,7 +13,6 @@
  */
 namespace pcpp
 {
-
 	/**
 	 * @struct tcphdr
 	 * Represents an TCP protocol header
@@ -327,6 +326,7 @@ namespace pcpp
 
 	/**
 	 * @class TcpLayer
+	 * TCP层可以对 option选项进行增加和删除，不建议使用
 	 * Represents a TCP (Transmission Control Protocol 传输控制协议) protocol layer
 	 */
 	class TcpLayer : public Layer
