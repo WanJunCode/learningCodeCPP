@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2014 Matt Fichman
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, APEXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include "http/Common.hpp"
+#include "http/Headers.hpp"
+
+namespace http {
+
+// 静态类变量
+std::string const Headers::HOST("Host");
+std::string const Headers::CONTENT_LENGTH("Content-Length");
+std::string const Headers::ACCEPT_ENCODING("Accept-Encoding");
+std::string const Headers::CONNECTION("Connection");
+
+// 取出 http 头中间键name对应值
+std::string const Headers::header(std::string const& name) const {
+    auto i = header_.find(name);
+    return (i == header_.end()) ? "" : i->second;
+}
+
+// 存入 http 头中键值对
+void Headers::headerIs(std::string const& name, std::string const& value) {
+    header_.emplace(name, value);
+}
+
+}

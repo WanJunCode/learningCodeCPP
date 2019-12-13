@@ -1,0 +1,120 @@
+{
+    "//node_type": "节点类型：ACCESS，LOGIC，PROXY，CENTER等，由业务层定义",
+    "node_type": "ACCESS",
+    "//access_host": "对系统外提供服务绑定的IP（Client to Server），若不提供对外服务，则无需配置",
+    "access_host": "192.168.18.81",
+    "//access_port": "对系统外提供服务监听的端口",
+    "access_port": 9988,
+    "//access_codec": "接入端编解码器，目前支持CODEC_PRIVATE(4),CODEC_HTTP(3),CODEC_PROTOBUF(2)",
+    "access_codec": 4,
+    "gateway": "113.102.157.188",
+    "gateway_port": 9988,
+    "//host": "系统内各Server之间通信绑定的IP（Server to Server）",
+    "host": "192.168.18.81",
+    "//port": "系统内各Server之间通信监听的端口",
+    "port": 9987,
+    "//server_name": "异步事件驱动Server",
+    "server_name": "AsyncServer",
+    "//worker_num": "进程数量",
+    "worker_num": 10,
+    "//with_loader":"是否启动loader进程",
+    "with_loader":false,
+    "//new_client_to_loader":"集群外部（从access_port端口进来）的新连接直接转发到loader，不转发给worker",
+    "new_client_to_loader":false,
+    "//cpu_affinity":"是否设置进程CPU亲和度（绑定CPU）",
+    "cpu_affinity":false,
+    "//worker_capacity": "子进程最大工作负荷",
+    "worker_capacity": 1000000,
+    "//config_path": "配置文件路径（相对路径）",
+    "config_path": "conf/",
+    "//log_path": "日志文件路径（相对路径）",
+    "log_path": "log/",
+    "//log_max_line_len":"每条日志最大字节数",
+    "log_max_line_len":4096,
+    "//beacon": "控制中心",
+    "beacon": [
+        { "host": "192.168.1.11", "port": 16000 },
+        { "host": "192.168.1.12", "port": 16000 }
+    ],
+    "//max_log_file_num": "最大日志文件数量，用于日志文件滚动",
+    "max_log_file_num": 5,
+    "//max_log_file_size": "单个日志文件大小限制",
+    "max_log_file_size": 20480000,
+    "//permission": "限制。addr_permit为连接限制，限制每个IP在统计时间内连接次数；uin_permit为消息数量限制，限制每个用户在单位统计时间内发送消息数量。",
+    "permission": {
+        "addr_permit": { "stat_interval": 60.0, "permit_num": 1000000000 },
+        "uin_permit": { "stat_interval": 60.0, "permit_num": 600000000 }
+    },
+    "//io_timeout": "网络IO（连接）超时设置（单位：秒）小数点后面至少保留一位",
+    "io_timeout": 300.0,
+    "//step_timeout": "步骤超时设置（单位：秒）小数点后面至少保留一位",
+    "step_timeout": 1.5,
+    "log_levels": { "FATAL": 0, "CRITICAL": 1, "ERROR": 2, "NOTICE": 3, "WARNING": 4, "INFO": 5, "DEBUG": 6, "TRACE": 7 },
+    "log_level": 7,
+    "net_log_level": 6,
+    "//with_ssl": "SSL配置（可为空），路径为相对${WorkPath}的相对路径，公钥文件和私钥文件均为PEM格式",
+    "with_ssl": {
+        "config_path": "conf/ssl",
+        "cert_file": "20180623143147.pem",
+        "key_file": "20180623143147.key"
+    },
+    "//refresh_interval": "刷新Server配置，检查、加载插件动态库时间周期",
+    "refresh_interval": 60,
+    "load_config":{
+        "manager":{            
+        },
+        "worker":{
+            "boot_load": {
+                "cmd": [
+                    { "cmd": 1001, "class": "neb::CmdHello" },
+                    { "cmd": 1003, "class": "neb::CmdDbAgent" }
+                ],
+                "module": [
+                    { "path": "neb/switch", "class": "neb::ModuleSwitch" },
+                    { "path": "neb/hello", "class": "neb::ModuleHello" }
+                ]
+            },
+            "dynamic_loading": [{
+                    "so_path": "plugins/User.so",
+                    "load": false,
+                    "version": "1.0",
+                    "cmd": [
+                        { "cmd": 2001, "class": "neb::CmdUserLogin" },
+                        { "cmd": 2003, "class": "neb::CmdUserLogout" }
+                    ],
+                    "module": [
+                        { "path": "im/user/login", "class": "neb::ModuleLogin" },
+                        { "path": "im/user/logout", "class": "neb::ModuleLogout" }
+                    ],
+                    "session":["im::SessionUser", "im::SessionGroup"],
+                    "step":["im::StepLogin", "im::StepLogout", "im::StepP2pChat"],
+                    "matrix":[],
+                    "chain":[]
+                },
+                {
+                    "so_path": "plugins/ChatMsg.so",
+                    "load": false,
+                    "version": "1.0",
+                    "cmd": [
+                        { "cmd": 2001, "class": "neb::CmdChat" }
+                    ],
+                    "module": [],
+                    "session":[],
+                    "step":[],
+                    "matrix":[],
+                    "chain":[]
+                }
+            ],
+            "runtime":{
+                "chains":{
+                    "chain_1":["step1", "matrix1", ["step2A", "step2B", "step2C"], "step3", "matrix2"],
+                    "chain_2":[]
+                }
+            }
+        },
+        "loader":{            
+        }
+    },
+    "//custom": "自定义配置，用于通过框架层带给业务",
+    "custom": {}
+}
