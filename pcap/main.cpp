@@ -1,4 +1,5 @@
 #include <pcap.h>
+#include "HashCalc.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -8,6 +9,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <map>
+
+HashCalc hashCalc;
+std::map<uint32_t,uint32_t> SessMap;
 
 typedef struct eth_hdr{
     u_char dst_mac[6];              // 目标mac 硬件地址
@@ -76,12 +81,12 @@ void parse_callback(unsigned char *arg, const struct pcap_pkthdr *packet_header,
     printf("Packet length : %d\n",packet_header->len);
     printf("Number of bytes : %d\n",packet_header->caplen);
     printf("Received time : %s\n",ctime((const time_t*)&packet_header->ts.tv_sec));
-    for(int i=0;i<packet_header->caplen;i++){
-        printf(" %02x",packet_content[i]);
-        if((i+1)%16==0){
-            printf("\n");
-        }
-    }
+    // for(int i=0;i<packet_header->caplen;i++){
+    //     printf(" %02x",packet_content[i]);
+    //     if((i+1)%16==0){
+    //         printf("\n");
+    //     }
+    // }
     printf("\n\n");
 
 
@@ -103,18 +108,18 @@ void parse_callback(unsigned char *arg, const struct pcap_pkthdr *packet_header,
         if(ip->protocol==TCP_PROTOCOL_ID){
             printf("tcp is used:\n");
             tcp=(tcp_hdr*)(packet_content+ETH_HEADER_LENGTH+IP_HEADER_LENGTH);
-            // 网络字节序到主机字节序
-            // printf("tcp source port : %u\n",ntohs(tcp->sport));
-            // printf("tcp dest port : %u\n",ntohs(tcp->dport));
-            // printf("tcp seq : %u\n",swap32(tcp->seq));
-            // printf("tcp ack : %u\n",swap32(tcp->ack));
-            // printf("head_len : %u\n",ntohs(tcp->head_len));
-            // printf("windoes size : %u\n",ntohs(tcp->wind_size));
-            // printf("check_sum : %u\n",ntohs(tcp->check_sum));
-            // printf("urg_ptr : %u\n",ntohs(tcp->urg_ptr));
+            printf("tcp source port : %u\n",ntohs(tcp->sport));
+            printf("tcp dest port : %u\n",ntohs(tcp->dport));
+            printf("tcp seq : %u\n",swap32(tcp->seq));
+            printf("tcp ack : %u\n",swap32(tcp->ack));
+            printf("head_len : %u\n",ntohs(tcp->head_len));
+            printf("windoes size : %u\n",ntohs(tcp->wind_size));
+            printf("check_sum : %u\n",ntohs(tcp->check_sum));
+            printf("urg_ptr : %u\n",ntohs(tcp->urg_ptr));
             
-            // auto hashkey = CalcHashValue(ntohl(ip->sourceIP),ntohl(ip->destIP),ntohs(tcp->sport),ntohs(tcp->dport))
-            // printf("hashkey = [%lu]\n",hashkey);
+            auto hashkey = hashCalc.CalcHashValue(ntohl(*(uint32_t *)ip->sourceIP),ntohl(*(uint32_t *)ip->destIP),ntohs(tcp->sport),ntohs(tcp->dport));
+            printf("hashkey = [%u]\n",hashkey);
+            SessMap[hashkey]++;
         }
         else if(ip->protocol==UDP_PROTOCOL_ID){
             printf("udp is used:\n");
@@ -145,10 +150,15 @@ int main(int argc, char *argv[]){
         printf("error: pcap_open_offline(): %s\n", errBuf);
         exit(1);
     }
+    hashCalc.Init(2^10);
   
     /* wait loop forever */
     pcap_loop(device, -1, parse_callback, NULL);
   
     pcap_close(device);
+
+    for(auto i : SessMap){
+        printf("TCP sess key=%u num=%u\n",i.first,i.second);
+    }
     return 0;
 }

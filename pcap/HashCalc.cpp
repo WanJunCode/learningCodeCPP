@@ -68,18 +68,3 @@ uint32_t HashCalc::CalcHashValue(uint32_t saddr, uint32_t daddr, uint16_t sport,
     iHashValue = res & (iHashTableSize - 1);
     return iHashValue;
 }
-
-static uint32_t HashCalc::Hash(const char *str)
-{
-    unsigned int seed = 131; // 31 131 1313 13131 131313 etc..
-    uint32_t hash = 0;
-
-    if(str != NULL)
-    {
-        while (*str)
-        {   
-            hash = hash * seed + (*str++);
-        }
-    }	
-    return hash;
-}
