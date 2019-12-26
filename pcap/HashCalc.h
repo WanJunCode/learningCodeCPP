@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "StructDefine.h"
+
 
 /*
  *@beief 哈希值计算
@@ -33,6 +35,10 @@ public:
 	int Init(uint64_t iSize);
 	
 	uint32_t CalcHashValue(uint32_t saddr, uint32_t daddr, uint16_t sport, uint16_t dport);
+	
+	uint32_t CalcHashValue(NetTuple5 tuple){
+		return CalcHashValue(tuple.saddr,tuple.daddr,tuple.sport,tuple.dport);
+	}
 	
 	static uint32_t Hash(const char *str)
 	{

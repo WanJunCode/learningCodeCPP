@@ -1,0 +1,9 @@
+
+
+main function read pcap file, use HashCalc calcuate hash value for each session.
+SessMgr's input is a single packet by reading pcap file.
+
+all session is manager by class SessMgr, we should make HashCalc as part of SessMgr.
+SessMgr has a std::map to find the correct Session pointer, and then put packet into it.
+in case of hash clash , use a SessionNode list to solve.
+

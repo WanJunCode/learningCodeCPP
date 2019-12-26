@@ -1,10 +1,10 @@
 all: demo
 
 
-demo: main.cpp HashCalc.cpp
-	g++ main.cpp HashCalc.cpp -o demo -lpcap
+demo: main.cpp HashCalc.cpp SessMgr.cpp
+	clang++ main.cpp HashCalc.cpp SessMgr.cpp -o demo -lpcap -g
 
 
 .PHONY:clean
 clean:
-	rm -rf demo
+	rm -rf demo core*

@@ -28,7 +28,7 @@ void HashCalc::Getrnd()
 int HashCalc::Init(uint64_t iSize)
 {
     iHashTableSize = iSize;
-
+    printf("HashCalc iHashTableSize = %lu\n",iHashTableSize);
     int i, n, j;
     int p[12];
     Getrnd();
