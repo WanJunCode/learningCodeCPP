@@ -59,9 +59,7 @@ void Log::printf(LogLevel level,unsigned long pthread_id,const std::string filen
     Log::getInstance()<<timeStr<<vform(cmd,args);
     // 打印到控制台
     std::cout<<timeStr<<vform(cmd,args);
-    // root.notice(vform(cmd,args));
 
-    // ! problem
     // 打印到log4cpp
     // switch (int(level))
     // {

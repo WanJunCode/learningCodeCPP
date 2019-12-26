@@ -6,14 +6,16 @@
 
 int main()
 {
+  // 4. 实例化一个category对象
+  log4cpp::Category& warn_log = log4cpp::Category::getInstance("mywarn");
+
 	//1. 初始化一个layout对象
   log4cpp::Layout* layout =  new log4cpp::BasicLayout();
    // 2. 初始化一个appender 对象
   log4cpp::Appender* appender = new log4cpp::FileAppender("FileAppender","./test_log4cpp1.log");
     // 3. 把layout对象附着在appender对象上
   appender->setLayout(layout);
-  // 4. 实例化一个category对象
-  log4cpp::Category& warn_log = log4cpp::Category::getInstance("mywarn");
+
   // 5. 把appender对象附到category上
   warn_log.setAppender(appender);
   // 6. 设置category的优先级，低于此优先级的日志不被记录

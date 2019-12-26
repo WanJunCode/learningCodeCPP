@@ -21,7 +21,7 @@ SessMgr::SessMgr(uint32_t hashnum){
 }
 
 SessMgr::~SessMgr(){
-    // printf("all packet %d\nno eth num %d\ntcp packet %d\nudp packet num %d\nother packet %d\n",allPktnum,noethNum,tcpPktNum,udpPktNum,otherPktNum);
+    LOG_DEBUG("all packet %d\nno eth num %d\ntcp packet %d\nudp packet num %d\nother packet %d\n",allPktnum,noethNum,tcpPktNum,udpPktNum,otherPktNum);
 
     int numOfNode=0;
     int numTcpPkt=0;
@@ -30,8 +30,7 @@ SessMgr::~SessMgr(){
         numTcpPkt+=i.second->numPkt;
         delete i.second;
     }
-    // LOG_DEBUG("tcp session %d\ntcp session node %d\ntcp packet %d\n",tcpSession,numOfNode,numTcpPkt);
-    LOG_DEBUG("session manager dtor\n");
+    LOG_DEBUG("tcp session %d\ntcp session node %d\ntcp packet %d\n",tcpSession,numOfNode,numTcpPkt);
     for(auto i : UDPSessMap){
         delete i.second;
     }
