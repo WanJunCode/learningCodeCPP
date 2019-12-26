@@ -7,3 +7,6 @@ all session is manager by class SessMgr, we should make HashCalc as part of Sess
 SessMgr has a std::map to find the correct Session pointer, and then put packet into it.
 in case of hash clash , use a SessionNode list to solve.
 
+SessMgr 1:n Session             hashMap
+
+Session 1:n SessionNode         nodeList

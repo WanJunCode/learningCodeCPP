@@ -1,0 +1,3 @@
+1577350840 ALERT mywarn : Alert info
+1577350840 WARN mywarn : This will be a logged warning
+1577350840 CRIT mywarn : Importance depends on context

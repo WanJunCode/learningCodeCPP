@@ -4,6 +4,8 @@
 #include <map>
 #include <list>
 #include "HashCalc.h"
+#include "Packet.h"
+#include "Log.h"
 
 enum TCP_STATE{
     TCP_ESTABLED,
@@ -101,42 +103,47 @@ struct AssemableInfo{
 typedef struct SessionNode_t{
 
     SessionNode_t(NetTuple5 tuple):_tuple(tuple){
-    
     }
 
     bool match(NetTuple5 tuple){
-        // 
         if(memcmp(&_tuple,&tuple,sizeof(NetTuple5))==0 || (tuple.saddr==_tuple.daddr && tuple.sport==_tuple.dport)){
             return true;
         }
         return false;
     }
 
+    void process(Packet *pkt){
+
+        delete pkt;
+    }
+
     NetTuple5 _tuple;
 }SessionNode;
 
 // session use to recombine TCP stream
-typedef struct Session_h{
+typedef struct Session_t{
 
-    Session_h(){
-
+    Session_t(){
+        numNode = 0;
+        numPkt = 0;
     }
 
-    ~Session_h(){
+    ~Session_t(){
         for(auto node: nodelist){
             delete node;
         }
     }
 
-    void process(NetTuple5 tuple,const unsigned char *packet_content){
-        auto node = match(tuple);
-        if(node){
-            // find session node
-
-        }else{
-            // can't find node
-            createSessionNode(tuple);
+    // packet into the right hashkey Session process
+    void process(Packet *packet){
+        numPkt++;
+        auto node = match(packet->tuple5);   // traverse to find correct Session Node
+        if(node == NULL){
+            // can't find node, create new one and put into nodelist
+            node = createSessionNode(packet->tuple5);
         }
+        // process pkt and delete
+        node->process(packet);
     }
 
     SessionNode *match(NetTuple5 tuple){
@@ -148,17 +155,20 @@ typedef struct Session_h{
         return NULL;
     }
 
-    void createSessionNode(NetTuple5 tuple){
+    SessionNode *createSessionNode(NetTuple5 tuple){
+        numNode++;
         auto node = new SessionNode(tuple);
         nodelist.push_back(node);
+        return node;
     }
     
+    uint32_t numNode;
+    uint32_t numPkt;
     std::list<SessionNode *> nodelist;
 }Session;
 
 class SessMgr{
 public:
-    // hashnum must be less then 18
     SessMgr(uint32_t hashnum);
 
     ~SessMgr();
@@ -174,12 +184,12 @@ private:
     HashCalc hashCalc;
 
     int allPktnum;
+    int noethNum;
     int tcpPktNum;
     int udpPktNum;
-    int tcpNoFind;
-    int tcpCreate;
     int otherPktNum;
-    int noethNum;
+    int tcpSession;
+    int tcpSessionNode;
 };
 
 #endif //SESSION_MANAGER

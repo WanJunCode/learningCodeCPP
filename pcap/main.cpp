@@ -1,4 +1,5 @@
 #include "SessMgr.h"
+#include "Log.h"
 
 #include <pcap.h>
 #include <stdio.h>
@@ -26,17 +27,17 @@ void parse_callback(unsigned char *arg, const struct pcap_pkthdr *packet_header,
 }
 
 int main(int argc, char *argv[]){
-    
+    LOG_DEBUG("PCAP start...\n");
     char errBuf[PCAP_ERRBUF_SIZE];
 
     pcap_t *device = pcap_open_offline(argv[1],errBuf);
   
     if(!device){
-        printf("error: pcap_open_offline(): %s\n", errBuf);
+        LOG_DEBUG("error: pcap_open_offline(): %s\n", errBuf);
         exit(1);
     }
     // hashCalc.Init(2^10);
-  
+
     /* wait loop forever */
     pcap_loop(device, -1, parse_callback, NULL);
   
