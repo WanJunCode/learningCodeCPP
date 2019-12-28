@@ -7,4 +7,4 @@ demo: main.cpp HashCalc.cpp SessMgr.cpp Packet.cpp Log.cpp Tool.cpp
 
 .PHONY:clean
 clean:
-	rm -rf demo core* *.out
+	rm -rf demo core* *.out pcap/*

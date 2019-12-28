@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include "Tool.h"
 
 #pragma pack(1)
 
@@ -123,6 +124,12 @@ struct NetTuple5{
             return false;
         }
         return true;
+    }
+
+    std::string getName(){
+        char name[120]={0};
+        sprintf(name,"pcap/%s_%s_%d_%d_%d.out",TransferToIp(saddr).c_str(),TransferToIp(daddr).c_str(),sport,dport,iHashValue);
+        return std::string(name);
     }
 
     // host sequnce

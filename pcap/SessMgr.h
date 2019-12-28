@@ -3,6 +3,8 @@
 
 #include <map>
 #include <list>
+
+
 #include "HashCalc.h"
 #include "Packet.h"
 #include "Log.h"
@@ -102,8 +104,18 @@ struct AssemableInfo{
 
 typedef struct SessionNode_t{
 
-    SessionNode_t(NetTuple5 tuple):_tuple(tuple){
+    SessionNode_t(NetTuple5 tuple):_tuple(tuple),numberPkt(0){
+        fd = fopen(_tuple.getName().c_str(),"a");
+        if(fd == NULL){
+            LOG_DEBUG("fd create fail\n");
+        }
     }
+
+    ~SessionNode_t(){
+        LOG_DEBUG("SESSION have [%d][%u] packets\n",_tuple.tranType,numberPkt);
+        fclose(fd);
+    }
+
 
     bool match(NetTuple5 tuple){
         if(memcmp(&_tuple,&tuple,sizeof(NetTuple5))==0 || (tuple.saddr==_tuple.daddr && tuple.sport==_tuple.dport)){
@@ -113,16 +125,20 @@ typedef struct SessionNode_t{
     }
 
     void process(Packet *pkt){
-        if(pkt->tuple5.tranType==TranType_TCP){
-            LOG_DEBUG("TCP process\n");
-        }else if(pkt->tuple5.tranType==TranType_UDP){
-            LOG_DEBUG("UDP process\n");
+        numberPkt++;
+        if(_tuple.tranType==TranType_TCP){
+            auto num = fwrite(pkt->data,1,pkt->datalen,fd);
+            LOG_DEBUG("write [%lu]\n",num);
+        }else if(_tuple.tranType==TranType_UDP){
+            // LOG_DEBUG("UDP process\n");
         }else{
             LOG_DEBUG("other transport protocol\n");
         }
     }
 
+    uint32_t numberPkt;
     NetTuple5 _tuple;
+    FILE *fd;
 }SessionNode;
 
 // session use to recombine TCP stream

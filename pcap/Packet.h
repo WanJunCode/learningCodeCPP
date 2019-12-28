@@ -15,8 +15,8 @@ public:
 
     void parse();
 
-    Byte *_data;
-    uint32_t _datalen;
+    Byte *data;
+    uint32_t datalen;
     eth_hdr *ethernet;
     ip_hdr *ip;
     tcp_hdr *tcp;

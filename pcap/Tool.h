@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <iostream>
 #include <stdio.h>
+#include <string>
 
 // 将 format 和 变参 转化为 std::string
 std::string vform(const char* format, va_list args);
@@ -15,4 +16,6 @@ char *textFileRead(const char* filename);
 int byte2hex(const void *sSrc, int nSrcLen, char *sDest, int destLen);
 std::string byteTohex(const void *sSrc, int nSrcLen);
 
-#endif // !WANJUN_TOOL_H
+std::string TransferToIp(uint32_t src);
+
+#endif // WANJUN_TOOL_H

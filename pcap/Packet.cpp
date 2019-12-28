@@ -4,34 +4,34 @@
 #include <pcap.h>
 
 Packet::Packet(const Byte *newdata,uint32_t packetlen){
-    _datalen = packetlen;
-    _data = new Byte[packetlen];
-    memcpy(_data,newdata,packetlen);        // memory copy
+    datalen = packetlen;
+    data = new Byte[packetlen];
+    memcpy(data,newdata,packetlen);        // memory copy
     parse();
 }
 
 Packet::~Packet(){
-    if(_data){
-        delete []_data;
+    if(data){
+        delete []data;
     }
 }
 
-// must have prepare _data and _datalen
+// must have prepare data and datalen
 void Packet::parse(){
-    ethernet=(eth_hdr *)_data;
+    ethernet=(eth_hdr *)data;
     if(ntohs(ethernet->eth_type)==0x0800){
-        ip=(ip_hdr *)(_data+ETH_HEADER_LENGTH);
+        ip=(ip_hdr *)(data+ETH_HEADER_LENGTH);
         tuple5.saddr = ntohl(*(uint32_t *)ip->sourceIP);
         tuple5.daddr = ntohl(*(uint32_t *)ip->destIP);
 
         if(ip->protocol==TCP_PROTOCOL_ID){
-            tcp=(tcp_hdr *)(_data+ETH_HEADER_LENGTH+IP_HEADER_LENGTH);
+            tcp=(tcp_hdr *)(data+ETH_HEADER_LENGTH+IP_HEADER_LENGTH);
             tuple5.sport = ntohs(tcp->sport);
             tuple5.dport = ntohs(tcp->dport);
             tuple5.tranType = TranType_TCP;
         }
         else if(ip->protocol==UDP_PROTOCOL_ID){
-            udp=(udp_hdr *)(_data+ETH_HEADER_LENGTH+IP_HEADER_LENGTH);
+            udp=(udp_hdr *)(data+ETH_HEADER_LENGTH+IP_HEADER_LENGTH);
             tuple5.sport = ntohs(udp->sport);
             tuple5.dport = ntohs(udp->dport);
             tuple5.tranType = TranType_UDP;

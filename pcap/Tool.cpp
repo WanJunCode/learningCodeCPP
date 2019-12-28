@@ -104,3 +104,24 @@ std::string byteTohex(const void *sSrc, int nSrcLen) {
     }
     return "";
 }
+
+std::string TransferToIp(uint32_t src)
+{
+    using namespace std;
+    int iNum[4]{ 0 };
+    size_t sT = (src >> 8);
+    for (int i = 0; i < 4; i++)
+    {
+        iNum[i] = src - (sT << 8);
+        src = sT;
+        sT = sT >> 8;
+    }
+    std::string sOut;
+    for (int i = 3; i > 0 ; i--)
+    {
+        string temp = to_string(iNum[i]);
+        sOut += temp + '.';
+    }
+    sOut += to_string(iNum[0]);
+    return sOut;
+}
