@@ -52,13 +52,13 @@ void SessMgr::feedPkt(const struct pcap_pkthdr *packet_header, const unsigned ch
             tcpPktNum++;
             if(TCPSessMap.find(hashkey) == TCPSessMap.end()){
                 tcpSession++;
-                TCPSessMap[hashkey] = new Session();
+                TCPSessMap[hashkey] = new HashSlot();
             }
             TCPSessMap[hashkey]->process(packet);
         }else if(packet->tuple5.tranType == TranType_UDP){
             udpPktNum++;
             if(UDPSessMap.find(hashkey) == UDPSessMap.end()){
-                UDPSessMap[hashkey] = new Session();
+                UDPSessMap[hashkey] = new HashSlot();
             }
             UDPSessMap[hashkey]->process(packet);
         }else{
@@ -141,19 +141,19 @@ void SessionNode::process(Packet *pkt){
 }
 
 //=================================================================================
-Session::Session(){
+HashSlot::HashSlot(){
     numNode = 0;
     numPkt = 0;
 }
 
-Session::~Session(){
+HashSlot::~HashSlot(){
     for(auto node: nodelist){
         delete node;
     }
 }
 
 // packet into the right hashkey Session process
-void Session::process(Packet *packet){
+void HashSlot::process(Packet *packet){
     numPkt++;
     auto node = match(packet->tuple5);   // traverse to find correct Session Node
     if(node == NULL){
@@ -164,7 +164,7 @@ void Session::process(Packet *packet){
     node->process(packet);
 }
 
-SessionNode *Session::match(NetTuple5 tuple){
+SessionNode *HashSlot::match(NetTuple5 tuple){
     for(auto node : nodelist){
         if(node->match(tuple)){
             return node;
@@ -173,7 +173,7 @@ SessionNode *Session::match(NetTuple5 tuple){
     return NULL;
 }
 
-SessionNode *Session::createSessionNode(NetTuple5 tuple){
+SessionNode *HashSlot::createSessionNode(NetTuple5 tuple){
     numNode++;
     auto node = new SessionNode(tuple);
     nodelist.push_back(node);

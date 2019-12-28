@@ -9,6 +9,10 @@
 #include "Log.h"
 #include "StructDefine.h"
 
+// SessMgr  HashSlot  SessionNode
+//        1:n     1:n
+//    std::map   std::list
+
 class SessionNode{
 public:
     SessionNode(NetTuple5 tuple);
@@ -21,15 +25,15 @@ public:
 
     uint32_t numberPkt;
     NetTuple5 _tuple;
-    FILE *fd;
+    FILE *fd;                   // for saving packet data into file
 };
 
 // session use to recombine TCP stream
-class Session{
+class HashSlot{
 public:
-    Session();
+    HashSlot();
 
-    ~Session();
+    ~HashSlot();
 
     // packet into the right hashkey Session process
     void process(Packet *packet);
@@ -54,8 +58,8 @@ public:
     uint32_t getMapCount() const;
 
 private:
-    std::map<uint32_t,Session *> TCPSessMap;
-    std::map<uint32_t,Session *> UDPSessMap;
+    std::map<uint32_t,HashSlot *> TCPSessMap;
+    std::map<uint32_t,HashSlot *> UDPSessMap;
 
     HashCalc hashCalc;
 
