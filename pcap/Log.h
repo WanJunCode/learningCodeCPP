@@ -1,6 +1,8 @@
 #ifndef WANJUN_LOG_H
 #define WANJUN_LOG_H
 
+#include "Tool.h"
+
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
@@ -9,6 +11,12 @@
 #include <sys/syscall.h>   /* For SYS_xxx definitions */
 #include <mutex>
 #include <pthread.h>
+#include <time.h>
+#include <iomanip>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <memory>
 
 // for logcpp4cpp
 #include <log4cpp/Category.hh>
@@ -17,9 +25,8 @@
 #include <log4cpp/PropertyConfigurator.hh>
 #include <log4cpp/CategoryStream.hh>
 
-#include "Tool.h"
 
-#define LOG_FILE "logcpp_file.out"
+#define LOG_FILE "log_file.out"
 
 #define LOG_TRACE(fmt,...) \
     Log::getInstance().printf(Log::TRACE,pthread_self(),StripFileName(__FILE__),__LINE__,__FUNCTION__,fmt,##__VA_ARGS__);
@@ -53,18 +60,18 @@ public:
         return root_logcpp;
     }
 
-    Log();
-    ~Log();
+    void printf(LogLevel level,unsigned long pthread_id,const std::string filename,int line,const std::string function,const char *cmd,...);
 
     template<typename T>
     Log& operator << (const T&);
 
-    void printf(LogLevel level,unsigned long pthread_id,const std::string filename,int line,const std::string function,const char *cmd,...);
-
 private:
+
+    Log();
+    ~Log();
+
     mutable std::mutex mutex_;
     std::ofstream out;
-    log4cpp::Category& root;
 };
 
 template<typename T>
@@ -73,4 +80,4 @@ Log& Log::operator << (const T& data){
     return *this;
 }
 
-#endif // !WANJUN_LOG_H
+#endif // WANJUN_LOG_H
