@@ -44,24 +44,30 @@ void SessMgr::feedPkt(const struct pcap_pkthdr *packet_header, const unsigned ch
     allPktnum++;
     // parse Packet
     Packet *packet = new Packet(packet_content,packet_header->caplen);
-    auto hashkey = hashCalc.CalcHashValue(packet->tuple5);
-    packet->tuple5.iHashValue = hashkey;
+    if(packet){
+        auto hashkey = hashCalc.CalcHashValue(packet->tuple5);
+        packet->tuple5.iHashValue = hashkey;
 
-    if(packet->tuple5.tranType == TranType_TCP){
-        tcpPktNum++;
-        if(TCPSessMap.find(hashkey) == TCPSessMap.end()){
-            tcpSession++;
-            TCPSessMap[hashkey] = new Session();
+        if(packet->tuple5.tranType == TranType_TCP){
+            tcpPktNum++;
+            if(TCPSessMap.find(hashkey) == TCPSessMap.end()){
+                tcpSession++;
+                TCPSessMap[hashkey] = new Session();
+            }
+            TCPSessMap[hashkey]->process(packet);
+        }else if(packet->tuple5.tranType == TranType_UDP){
+            udpPktNum++;
+            if(UDPSessMap.find(hashkey) == UDPSessMap.end()){
+                UDPSessMap[hashkey] = new Session();
+            }
+            UDPSessMap[hashkey]->process(packet);
+        }else{
+            otherPktNum++;
         }
-        TCPSessMap[hashkey]->process(packet);
-    }else if(packet->tuple5.tranType == TranType_UDP){
-        udpPktNum++;
-        if(UDPSessMap.find(hashkey) == UDPSessMap.end()){
-            UDPSessMap[hashkey] = new Session();
-        }
-        UDPSessMap[hashkey]->process(packet);
+
+        delete packet;
     }else{
-        otherPktNum++;
+        LOG_DEBUG("create new Packet fail\n");
     }
     
 #if 0

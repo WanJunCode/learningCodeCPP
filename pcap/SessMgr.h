@@ -113,8 +113,13 @@ typedef struct SessionNode_t{
     }
 
     void process(Packet *pkt){
-
-        delete pkt;
+        if(pkt->tuple5.tranType==TranType_TCP){
+            LOG_DEBUG("TCP process\n");
+        }else if(pkt->tuple5.tranType==TranType_UDP){
+            LOG_DEBUG("UDP process\n");
+        }else{
+            LOG_DEBUG("other transport protocol\n");
+        }
     }
 
     NetTuple5 _tuple;
