@@ -105,3 +105,77 @@ void SessMgr::feedPkt(const struct pcap_pkthdr *packet_header, const unsigned ch
 #endif
 
 }
+
+
+// ===============================================================
+
+SessionNode::SessionNode(NetTuple5 tuple):_tuple(tuple),numberPkt(0){
+    fd = fopen(_tuple.getName().c_str(),"a");
+    if(fd == NULL){
+        LOG_DEBUG("fd create fail\n");
+    }
+}
+
+SessionNode::~SessionNode(){
+    LOG_DEBUG("SESSION have [%d][%u] packets\n",_tuple.tranType,numberPkt);
+    fclose(fd);
+}
+
+bool SessionNode::match(NetTuple5 tuple){
+    if(memcmp(&_tuple,&tuple,sizeof(NetTuple5))==0 || (tuple.saddr==_tuple.daddr && tuple.sport==_tuple.dport)){
+        return true;
+    }
+    return false;
+}
+
+void SessionNode::process(Packet *pkt){
+    numberPkt++;
+    if(_tuple.tranType==TranType_TCP){
+        auto num = fwrite(pkt->data,1,pkt->datalen,fd);
+        LOG_DEBUG("write [%lu]\n",num);
+    }else if(_tuple.tranType==TranType_UDP){
+        // LOG_DEBUG("UDP process\n");
+    }else{
+        LOG_DEBUG("other transport protocol\n");
+    }
+}
+
+//=================================================================================
+Session::Session(){
+    numNode = 0;
+    numPkt = 0;
+}
+
+Session::~Session(){
+    for(auto node: nodelist){
+        delete node;
+    }
+}
+
+// packet into the right hashkey Session process
+void Session::process(Packet *packet){
+    numPkt++;
+    auto node = match(packet->tuple5);   // traverse to find correct Session Node
+    if(node == NULL){
+        // can't find node, create new one and put into nodelist
+        node = createSessionNode(packet->tuple5);
+    }
+    // process pkt and delete
+    node->process(packet);
+}
+
+SessionNode *Session::match(NetTuple5 tuple){
+    for(auto node : nodelist){
+        if(node->match(tuple)){
+            return node;
+        }
+    }
+    return NULL;
+}
+
+SessionNode *Session::createSessionNode(NetTuple5 tuple){
+    numNode++;
+    auto node = new SessionNode(tuple);
+    nodelist.push_back(node);
+    return node;
+}

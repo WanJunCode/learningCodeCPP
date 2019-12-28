@@ -7,6 +7,12 @@
 
 #pragma pack(1)
 
+enum TCP_STATE{
+    TCP_ESTABLED,
+    TCP_FIN,
+    TCP_CLOSED
+};
+
 typedef struct eth_hdr{
     u_char dst_mac[6];              // 目标mac 硬件地址
     u_char src_mac[6];              // 源mac 硬件地址
@@ -140,6 +146,95 @@ struct NetTuple5{
     TranType tranType;
     uint32_t iHashValue;
 };
+
+
+struct DisorderNode{
+    DisorderNode(){
+        next = NULL;
+        prev = NULL;
+        data = NULL;
+        len = 0;
+        seq = 0;
+        ack = 0;
+        fin = false;
+    }
+
+    ~DisorderNode(){
+        if(data != NULL){
+            delete []data;
+            data = NULL;
+        }
+    }
+    
+    DisorderNode *next;
+    DisorderNode *prev;
+
+    char *data;             // must allocate with char[NUM]
+    uint32_t len;
+    uint32_t seq;
+    uint32_t ack; 
+    bool fin;
+};
+
+struct AssemableInfo{
+
+    AssemableInfo(){
+        tcpstate = TCP_ESTABLED;
+        data = NULL;
+        offset = 0;
+        count = 0;
+        count_new = 0;
+        bufsize = 0;
+        disOrderPktNum = 0;
+        seq = 0;
+        ack_seq = 0;
+        first_data_seq = 0;
+        pDisorderNodeListHead = NULL;
+        pDisorderNodeListTail = NULL;
+    }
+
+    ~AssemableInfo(){
+        if(data != NULL){
+            delete []data;
+            data = NULL;
+        }
+
+        DisorderNode *ptmp;
+        while (pDisorderNodeListHead != NULL)
+        {
+            ptmp = pDisorderNodeListHead->next;
+            delete pDisorderNodeListHead;
+            pDisorderNodeListHead = ptmp;
+        }
+
+        tcpstate = TCP_ESTABLED;
+        offset = 0;
+        count = 0;
+        count_new = 0;
+        bufsize = 0;
+        disOrderPktNum = 0;
+        seq = 0;
+        ack_seq = 0;
+        first_data_seq = 0;
+        pDisorderNodeListHead = NULL;
+        pDisorderNodeListTail = NULL;
+    }
+
+    TCP_STATE tcpstate;
+    char *data;                 // must allocate with char[NUM]
+    uint32_t offset;
+    uint32_t count;
+    uint32_t count_new;
+    uint32_t bufsize;
+    uint32_t disOrderPktNum;
+    uint32_t seq;
+    uint32_t ack_seq;
+    uint32_t first_data_seq;
+
+    DisorderNode *pDisorderNodeListHead;
+    DisorderNode *pDisorderNodeListTail;
+};
+
 
 #pragma pack()
 
