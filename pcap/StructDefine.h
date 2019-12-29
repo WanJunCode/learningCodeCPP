@@ -134,7 +134,8 @@ struct NetTuple5{
 
     std::string getName(){
         char name[120]={0};
-        sprintf(name,"pcap/%s_%s_%d_%d_%d.out",TransferToIp(saddr).c_str(),TransferToIp(daddr).c_str(),sport,dport,iHashValue);
+        sprintf(name,"pcap/%s_%s_%s_%d_%d_%d.out", tranType==TranType_TCP?"TCP":"UDP" ,TransferToIp(saddr).c_str(),
+            TransferToIp(daddr).c_str(),sport,dport,iHashValue);
         return std::string(name);
     }
 
@@ -179,7 +180,7 @@ struct DisorderNode{
 struct AssemableInfo{
 
     AssemableInfo(){
-        tcpstate = TCP_ESTABLED;
+        tcpState = TCP_ESTABLED;
         data = NULL;
         offset = 0;
         count = 0;
@@ -207,7 +208,7 @@ struct AssemableInfo{
             pDisorderNodeListHead = ptmp;
         }
 
-        tcpstate = TCP_ESTABLED;
+        tcpState = TCP_ESTABLED;
         offset = 0;
         count = 0;
         count_new = 0;
@@ -220,7 +221,7 @@ struct AssemableInfo{
         pDisorderNodeListTail = NULL;
     }
 
-    TCP_STATE tcpstate;
+    TCP_STATE tcpState;
     char *data;                 // must allocate with char[NUM]
     uint32_t offset;
     uint32_t count;
@@ -235,6 +236,40 @@ struct AssemableInfo{
     DisorderNode *pDisorderNodeListTail;
 };
 
+
+/*
+    *@brief 会话的拼包信息结构体
+    */
+struct SessAsmInfo
+{
+    SessAsmInfo()
+    {
+        pClientAsmInfo = NULL;
+        pServerAsmInfo = NULL;
+    }
+    
+    ~SessAsmInfo()
+    {
+        Clear();
+    }
+    
+    void Clear()
+    {
+        if(pClientAsmInfo != NULL)
+        {
+            delete pClientAsmInfo;
+            pClientAsmInfo = NULL;
+        }
+        if(pServerAsmInfo != NULL)
+        {
+            delete pServerAsmInfo;
+            pServerAsmInfo = NULL;
+        }
+    }
+    
+    AssemableInfo *pClientAsmInfo;         // 客户端节点
+    AssemableInfo *pServerAsmInfo;         // 服务端节点
+};
 
 #pragma pack()
 

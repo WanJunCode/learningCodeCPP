@@ -1,9 +1,13 @@
 #include "Packet.h"
-#include <string.h>
-#include <stdio.h>
-#include <pcap.h>
+
 
 Packet::Packet(const Byte *newdata,uint32_t packetlen){
+    ethernet = NULL;
+    ip = NULL;
+    tcp = NULL;
+    udp = NULL;
+    direct = Cli2Ser;
+
     datalen = packetlen;
     data = new Byte[packetlen];
     memcpy(data,newdata,packetlen);        // memory copy
@@ -39,6 +43,7 @@ void Packet::parse(){
         // ! necessary, make sure tuple dport is less then sport(server always small port just like 80 8080 21 22 etc)
         if(tuple5.sport<tuple5.dport){
             tuple5.Reverse();
+            direct = Ser2Cli;
         }
     }
 }

@@ -2,15 +2,7 @@
 #include "Log.h"
 
 #include <pcap.h>
-#include <stdio.h>
-#include <time.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <map>
+
 
 // HashCalc hashCalc;
 // std::map<uint32_t,uint32_t> SessMap;
@@ -22,7 +14,6 @@ void parse_callback(unsigned char *arg, const struct pcap_pkthdr *packet_header,
    
     // input
     sessmgr->feedPkt(packet_header, packet_content);
-
 }
 
 int main(int argc, char *argv[]){
@@ -38,7 +29,6 @@ int main(int argc, char *argv[]){
         LOG_DEBUG("error: pcap_open_offline(): %s\n", errBuf);
         exit(1);
     }
-    // hashCalc.Init(2^10);
 
     /* wait loop forever */
     pcap_loop(device, -1, parse_callback, NULL);

@@ -13,9 +13,12 @@
 //        1:n     1:n
 //    std::map   std::list
 
+// packet process flow
+// SessMgr::feedPkt -> HashSlot::process -> SessionNode::process
+
 class SessionNode{
 public:
-    SessionNode(NetTuple5 tuple);
+    SessionNode(Packet *pkt);
 
     ~SessionNode();
 
@@ -23,6 +26,11 @@ public:
 
     void process(Packet *pkt);
 
+    void CreateAsmInfo(Packet *packet);
+
+    int AssembPacket(Packet *packet);
+
+    SessAsmInfo *pSessAsmInfo;
     uint32_t numberPkt;
     NetTuple5 _tuple;
     FILE *fd;                   // for saving packet data into file
@@ -40,7 +48,7 @@ public:
 
     SessionNode *match(NetTuple5 tuple);
 
-    SessionNode *createSessionNode(NetTuple5 tuple);
+    SessionNode *createSessionNode(Packet *pkt);
     
     uint32_t numNode;
     uint32_t numPkt;

@@ -3,12 +3,8 @@
 #include "SessMgr.h"
 #include <stdio.h>
 #include <pcap.h>
+#include <assert.h>
 
-// aaaaaaaa bbbbbbbb cccccccc dddddddd
-// dddddddd cccccccc bbbbbbbb aaaaaaaa
-static u_int32_t swap32(u_int32_t a){
-    return (((a>>24)&0xFF)<<0) | (((a>>16)&0xFF)<<8) | (((a>>8)&0xFF)<<16) | (((a>>0)&0xFF)<<24);
-}
 
 SessMgr::SessMgr(uint32_t hashnum){
     hashCalc.Init(hashnum);
@@ -42,6 +38,7 @@ uint32_t SessMgr::getMapCount() const{
 
 void SessMgr::feedPkt(const struct pcap_pkthdr *packet_header, const unsigned char *packet_content){
     allPktnum++;
+    LOG_DEBUG("No.%d\n",allPktnum);
     // parse Packet
     Packet *packet = new Packet(packet_content,packet_header->caplen);
     if(packet){
@@ -92,15 +89,6 @@ void SessMgr::feedPkt(const struct pcap_pkthdr *packet_header, const unsigned ch
         // 偏移获得 ip 数据包头
         LOG_DEBUG("source ip : %d.%d.%d.%d\n",ip->sourceIP[0],ip->sourceIP[1],ip->sourceIP[2],ip->sourceIP[3]);
         LOG_DEBUG("dest ip : %d.%d.%d.%d\n",ip->destIP[0],ip->destIP[1],ip->destIP[2],ip->destIP[3]);
-
-            LOG_DEBUG("tcp is used:\n");
-            LOG_DEBUG("tcp source port : %u\n",ntohs(tcp->sport));
-            LOG_DEBUG("tcp dest port : %u\n",ntohs(tcp->dport));
-            LOG_DEBUG("tcp seq : %u\n",swap32(tcp->seq));
-            LOG_DEBUG("tcp ack : %u\n",swap32(tcp->ack));
-            LOG_DEBUG("head_len : %u\n",ntohs(tcp->head_len));
-            LOG_DEBUG("windoes size : %u\n",ntohs(tcp->wind_size));
-            LOG_DEBUG("check_sum : %u\n",ntohs(tcp->check_sum));
             LOG_DEBUG("urg_ptr : %u\n",ntohs(tcp->urg_ptr));
 #endif
 
@@ -108,17 +96,30 @@ void SessMgr::feedPkt(const struct pcap_pkthdr *packet_header, const unsigned ch
 
 
 // ===============================================================
+static void printPacket(Packet *packet){
+    if(packet->tuple5.tranType == TranType_TCP){
+        LOG_DEBUG(" %s packet seq [%u] ack [%u] datalen [%u] headlen [%d]\n", (packet->direct == Cli2Ser)?"===>":"<===" 
+            ,packet->getSeq(),packet->getAck(),packet->getDatalen(),packet->getHeadlen());
+    }
+}
 
-SessionNode::SessionNode(NetTuple5 tuple):_tuple(tuple),numberPkt(0){
+SessionNode::SessionNode(Packet *pkt):_tuple(pkt->tuple5),numberPkt(0){
     fd = fopen(_tuple.getName().c_str(),"a");
     if(fd == NULL){
         LOG_DEBUG("fd create fail\n");
     }
+
+    // judge client and server
+    pSessAsmInfo = new SessAsmInfo();
 }
 
 SessionNode::~SessionNode(){
-    LOG_DEBUG("SESSION have [%d][%u] packets\n",_tuple.tranType,numberPkt);
     fclose(fd);
+
+    if(pSessAsmInfo){
+        delete pSessAsmInfo;
+        pSessAsmInfo = NULL;
+    }
 }
 
 bool SessionNode::match(NetTuple5 tuple){
@@ -129,15 +130,63 @@ bool SessionNode::match(NetTuple5 tuple){
 }
 
 void SessionNode::process(Packet *pkt){
+    printPacket(pkt);
     numberPkt++;
+    assert(pSessAsmInfo != NULL);
+    // source port greater then destination port
+
+    if( (pkt->direct == Cli2Ser && pSessAsmInfo->pClientAsmInfo == NULL) ||
+        (pkt->direct == Ser2Cli && pSessAsmInfo->pServerAsmInfo == NULL) ){
+        CreateAsmInfo(pkt);
+    }
+
     if(_tuple.tranType==TranType_TCP){
-        auto num = fwrite(pkt->data,1,pkt->datalen,fd);
-        LOG_DEBUG("write [%lu]\n",num);
+        AssembPacket(pkt);
     }else if(_tuple.tranType==TranType_UDP){
-        // LOG_DEBUG("UDP process\n");
+        fwrite(pkt->data,1,pkt->datalen,fd);
     }else{
         LOG_DEBUG("other transport protocol\n");
     }
+}
+
+void SessionNode::CreateAsmInfo(Packet *packet){
+    AssemableInfo *info = NULL;
+    if(packet->direct == Cli2Ser){
+        pSessAsmInfo->pClientAsmInfo = new AssemableInfo();
+        info = pSessAsmInfo->pClientAsmInfo;
+    }else{
+        pSessAsmInfo->pServerAsmInfo = new AssemableInfo();
+        info = pSessAsmInfo->pServerAsmInfo;
+    }
+
+    // info could be clientInfo or serverInfo
+    if( packet->tcp ){
+        info->first_data_seq  = info->seq = packet->getSeq();
+        info->ack_seq = packet->getAck();
+        info->tcpState = TCP_ESTABLED;
+    }
+
+    if(packet->tuple5.tranType == TranType_TCP){
+        if(packet->direct == Cli2Ser){
+            LOG_DEBUG("first Packet ===> first data seq [%u] ack [%u]\n",packet->getSeq(),packet->getAck());
+        }else{
+            LOG_DEBUG("first Packet <=== first data seq [%u] ack [%u]\n",packet->getSeq(),packet->getAck());
+        }
+    }
+}
+
+int SessionNode::AssembPacket(Packet *packet){
+    if(packet->getDatalen()>0){
+        LOG_DEBUG("%s new data [%u]\n",(packet->direct == Cli2Ser)?"===>":"<===", packet->getDatalen())
+        fwrite(packet->data + (packet->getHeadlen() * 4),1,packet->getDatalen(),fd);
+    }
+
+    if(packet->direct == Cli2Ser){
+
+    }else{
+
+    }
+    return 0;
 }
 
 //=================================================================================
@@ -158,7 +207,7 @@ void HashSlot::process(Packet *packet){
     auto node = match(packet->tuple5);   // traverse to find correct Session Node
     if(node == NULL){
         // can't find node, create new one and put into nodelist
-        node = createSessionNode(packet->tuple5);
+        node = createSessionNode(packet);
     }
     // process pkt and delete
     node->process(packet);
@@ -173,9 +222,9 @@ SessionNode *HashSlot::match(NetTuple5 tuple){
     return NULL;
 }
 
-SessionNode *HashSlot::createSessionNode(NetTuple5 tuple){
+SessionNode *HashSlot::createSessionNode(Packet *pkt){
     numNode++;
-    auto node = new SessionNode(tuple);
+    auto node = new SessionNode(pkt);
     nodelist.push_back(node);
     return node;
 }
